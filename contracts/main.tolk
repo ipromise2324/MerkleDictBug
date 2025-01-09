@@ -9,6 +9,7 @@ fun beginParseExotic(c: cell): (slice, int)
 const EXOTIC_CELL_TYPE_SIZE = 8; // Exotic cell type size is 8 bits
 const MERKLE_PROOF_TYPE = 3; // 3 means merkle proof type in exotic 
 const MERKLE_ROOT_SIZE = 256; // Merkle root size is 256 bits
+const ADDRESS_SIZE = 267; // Address size is 267 bits
 
 // Errors
 const ERROR_NOT_EXOTIC_CELL = 1000;
@@ -37,9 +38,9 @@ get merkleAmount(key: slice, merkleRoot: int, exoticCell: cell): int {
     val merkleDict: cell = merkleProof.loadRef();
 
     // Load Dictionary from the proof slice and get the entry for the key
-    var (entry: slice, isKeyExist: int) = merkleDict.sDictGet(267, key);
+    var (entry: slice, isKeyExist: int) = merkleDict.sDictGet(ADDRESS_SIZE, key);
     debugPrintString("isKeyExist: ");
     debugPrint(isKeyExist);
     assert(isKeyExist, ERROR_KEY_NOT_EXIST);
-    return entry.loadCoins();
+    return entry.loadUint(32);
 }
