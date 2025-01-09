@@ -1,0 +1,35 @@
+#include "imports/stdlib.fc";
+
+(slice, int) begin_parse_exotic(cell c) asm "XCTOS";
+(slice, int) dict_get?(cell dict, int key_len, slice index) asm(index dict key_len) "DICTGET" "NULLSWAPIFNOT";
+
+;; Constants
+const EXOTIC_CELL_TYPE_SIZE = 8; ;; Exotic cell type size is 8 bits
+const MERKLE_PROOF_TYPE = 3; ;; 3 means merkle proof type in exotic 
+const MERKLE_ROOT_SIZE = 256; ;; Merkle root size is 256 bits
+const ADDRESS_SIZE = 267; ;; Address size is 267 bits
+
+;; Errors
+const error::not_exotic_cell = 1000;
+const error::wrong_cell_type = 1001;
+const error::wrong_merkle_root = 1002;
+const error::key_not_exits = 1003;
+
+() recv_internal(int my_balance, int msg_value, cell in_msg_full, slice in_msg_body) impure {
+    return ();
+}
+
+int get_merkle_amount(slice key, int merkle_root, cell merkle_proof) method_id {
+    (slice cs, int exotic?) = merkle_proof.begin_parse_exotic();
+    throw_unless(error::not_exotic_cell, exotic?);
+    throw_unless(error::wrong_cell_type, cs~load_uint(EXOTIC_CELL_TYPE_SIZE) == MERKLE_PROOF_TYPE);
+
+    ;; Check merkle root is same as distributor's merkle root
+    throw_unless(error::wrong_merkle_root, merkle_root == cs~load_uint(MERKLE_ROOT_SIZE));
+
+    cell reward_dict = cs~load_ref();
+    (slice claim_slice, int has_this_user?) = reward_dict.dict_get?(ADDRESS_SIZE, key);
+    throw_unless(error::key_not_exits, has_this_user?);
+    return 1;
+}
+
